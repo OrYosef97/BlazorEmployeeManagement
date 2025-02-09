@@ -1,0 +1,100 @@
+﻿@page "/add-employee"
+
+@using System.IO
+@using Microsoft.AspNetCore.Components.Forms
+@using EmployeeManagement.Models
+@inject EmployeeManagement.Services.EmployeeService EmployeeService
+@inject NavigationManager Navigation
+
+@inject IWebHostEnvironment Env  
+<!-- for saving the uploaded file locally -->
+
+<EditForm Model="@newEmployee" 
+          OnValidSubmit="@HandleValidSubmit" 
+          FormName="AddEmployeeForm">
+    <DataAnnotationsValidator />
+    <ValidationSummary />
+
+    <!-- Name -->
+    <div class="form-group">
+        <label>Name:</label>
+        <InputText @bind-Value="newEmployee.Name" class="form-control" />
+        <ValidationMessage For="@(() => newEmployee.Name)" />
+    </div>
+
+    <!-- Title as dropdown -->
+    <div class="form-group">
+        <label>Title (Junior, Senior, CEO):</label>
+        <InputSelect @bind-Value="newEmployee.Title" class="form-control">
+            <option value="">-- Select Title --</option>
+            <option value="Junior">Junior</option>
+            <option value="Senior">Senior</option>
+            <option value="CEO">CEO</option>
+        </InputSelect>
+        <ValidationMessage For="@(() => newEmployee.Title)" />
+    </div>
+
+    <!-- Salary -->
+    <div class="form-group">
+        <label>Salary:</label>
+        <InputNumber @bind-Value="newEmployee.Salary" class="form-control" />
+        <ValidationMessage For="@(() => newEmployee.Salary)" />
+    </div>
+
+    <!-- Image Upload -->
+    <div class="form-group">
+        <label>Profile Image (Upload):</label>
+        <InputFile OnChange="@HandleFileSelected" />
+        @if (!string.IsNullOrEmpty(newEmployee.ProfileImage) && newEmployee.ProfileImage != "default.png")
+        {
+            <!-- Display a small preview if the user already chose an image -->
+            <div class="mt-2">
+                <img src="@newEmployee.ProfileImage" alt="Preview" width="100" />
+            </div>
+        }
+    </div>
+
+    <button class="btn btn-success" type="submit">Save</button>
+    <button class="btn btn-secondary" type="button" @onclick="Cancel">Cancel</button>
+</EditForm>
+
+@code {
+    private Employee newEmployee = new();
+
+    private void Cancel()
+    {
+        Navigation.NavigateTo("/employees");
+    }
+
+    private void HandleValidSubmit()
+    {
+        // If validation is successful, add the employee
+        EmployeeService.AddEmployee(newEmployee);
+        Navigation.NavigateTo("/employees");
+    }
+
+    private async Task HandleFileSelected(InputFileChangeEventArgs e)
+    {
+        // You can limit files with e.GetMultipleFiles(maxCount) if desired
+        var file = e.File; 
+        if (file is not null)
+        {
+            // Create a unique filename
+            var fileName = $"{Guid.NewGuid()}{Path.GetExtension(file.Name)}";
+            
+            // Build a path to wwwroot/uploads/<uniqueFilename>
+            var uploadsFolder = Path.Combine(Env.WebRootPath, "uploads");
+            Directory.CreateDirectory(uploadsFolder); // Ensure folder exists
+
+            var filePath = Path.Combine(uploadsFolder, fileName);
+
+            // Copy the file stream to the server
+            using var stream = file.OpenReadStream();  // By default max 512 MB
+            using var fs = new FileStream(filePath, FileMode.Create);
+            await stream.CopyToAsync(fs);
+
+            // Set the employee’s ProfileImage to the relative path: /uploads/<fileName>
+            newEmployee.ProfileImage = $"/uploads/{fileName}";
+        }
+    }
+}

@@ -1,0 +1,168 @@
+﻿@page "/employees"
+@using EmployeeManagement.Models
+@inject EmployeeManagement.Services.EmployeeService EmployeeService
+@inject NavigationManager Navigation
+
+<h3>Employee List</h3>
+
+<!-- Filters Section -->
+<div class="row mb-3">
+    <div class="col-md-3">
+        <label>Filter by Name:</label>
+        <input @bind="filterName" class="form-control" />
+    </div>
+    <div class="col-md-3">
+        <label>Filter by Title:</label>
+        <select @bind="filterTitle" class="form-control">
+            <option value="">All</option>
+            <option>Junior</option>
+            <option>Senior</option>
+            <option>CEO</option>
+        </select>
+    </div>
+    <div class="col-md-3">
+        <label>Min Salary:</label>
+        <input type="number" @bind="filterMinSalary" class="form-control" />
+    </div>
+    <div class="col-md-3">
+        <label>Max Salary:</label>
+        <input type="number" @bind="filterMaxSalary" class="form-control" />
+    </div>
+</div>
+
+<!-- Sorting Buttons (optional) -->
+<div class="mb-3">
+    <button class="btn btn-outline-secondary me-2" @onclick="@( () => SortBy("Name") )">
+        Sort by Name @(sortColumn == "Name" ? sortDirectionSymbol : "")
+    </button>
+    <button class="btn btn-outline-secondary me-2" @onclick="@( () => SortBy("Salary") )">
+        Sort by Salary @(sortColumn == "Salary" ? sortDirectionSymbol : "")
+    </button>
+    <button class="btn btn-outline-secondary me-2" @onclick="@( () => SortBy("Title") )">
+        Sort by Title @(sortColumn == "Title" ? sortDirectionSymbol : "")
+    </button>
+</div>
+
+
+<!-- Employee Table -->
+<table class="table table-striped">
+    <thead>
+        <tr>
+            <th>Profile</th>
+            <th>Name</th>
+            <th>Title</th>
+            <th>Salary</th>
+            <th>Actions</th>
+        </tr>
+    </thead>
+    <tbody>
+        @foreach (var employee in FilteredAndSortedEmployees)
+        {
+            <tr>
+                <td>
+                    <img src="@employee.ProfileImage" alt="Profile" width="50" height="50" />
+                </td>
+                <td>@employee.Name</td>
+                <td>
+                    @employee.Title
+                    @* Example: Show an icon based on Title *@
+                    @switch (employee.Title)
+                    {
+                        case "Junior":
+                            <span class="ms-1 bi bi-person"></span>
+                            ; break;
+                        case "Senior":
+                            <span class="ms-1 bi bi-person-check"></span>
+                            ; break;
+                        case "CEO":
+                            <span class="ms-1 bi bi-briefcase-fill"></span>
+                            ; break;
+                    }
+                </td>
+                <td>@employee.Salary.ToString("C")</td>
+                <td>
+                    <button class="btn btn-primary me-2" @onclick="() => EditEmployee(employee.Id)">Edit</button>
+                    <button class="btn btn-danger" @onclick="() => DeleteEmployee(employee.Id)">Delete</button>
+                </td>
+            </tr>
+        }
+    </tbody>
+</table>
+
+@code {
+    // FILTERING FIELDS
+    private string filterName = string.Empty;
+    private string filterTitle = string.Empty;
+    private decimal? filterMinSalary;
+    private decimal? filterMaxSalary;
+
+    // SORTING FIELDS
+    private string sortColumn = "Name";
+    private bool sortAscending = true;
+
+    private string sortDirectionSymbol => sortAscending ? "↑" : "↓";
+
+    // Combine Filter + Sort
+    private IEnumerable<Employee> FilteredAndSortedEmployees
+    {
+        get
+        {
+            // Start with all employees
+            var query = EmployeeService.GetEmployees().AsQueryable();
+
+            // 1) Apply FILTER
+            if (!string.IsNullOrWhiteSpace(filterName))
+            {
+                query = query.Where(e => e.Name.Contains(filterName, StringComparison.OrdinalIgnoreCase));
+            }
+            if (!string.IsNullOrWhiteSpace(filterTitle))
+            {
+                query = query.Where(e => e.Title.Equals(filterTitle, StringComparison.OrdinalIgnoreCase));
+            }
+            if (filterMinSalary.HasValue)
+            {
+                query = query.Where(e => e.Salary >= filterMinSalary.Value);
+            }
+            if (filterMaxSalary.HasValue)
+            {
+                query = query.Where(e => e.Salary <= filterMaxSalary.Value);
+            }
+
+            // 2) Apply SORT
+            query = sortColumn switch
+            {
+                "Name" => sortAscending ? query.OrderBy(e => e.Name) : query.OrderByDescending(e => e.Name),
+                "Salary" => sortAscending ? query.OrderBy(e => e.Salary) : query.OrderByDescending(e => e.Salary),
+                "Title" => sortAscending ? query.OrderBy(e => e.Title) : query.OrderByDescending(e => e.Title),
+                _ => query
+            };
+
+            return query.ToList();
+        }
+    }
+
+    private void SortBy(string column)
+    {
+        if (sortColumn == column)
+        {
+            // Toggle ascending/descending if same column clicked again
+            sortAscending = !sortAscending;
+        }
+        else
+        {
+            // New column, default to ascending
+            sortColumn = column;
+            sortAscending = true;
+        }
+    }
+
+    private void EditEmployee(int id)
+    {
+        Navigation.NavigateTo($"/edit-employee/{id}");
+    }
+
+    private void DeleteEmployee(int id)
+    {
+        EmployeeService.DeleteEmployee(id);
+    }
+}

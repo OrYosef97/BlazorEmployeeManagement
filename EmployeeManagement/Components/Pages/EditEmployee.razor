@@ -1,0 +1,71 @@
+﻿@page "/edit-employee/{id:int}"
+@using EmployeeManagement.Models
+@inject EmployeeManagement.Services.EmployeeService EmployeeService
+@inject NavigationManager Navigation
+
+<h3>Edit Employee</h3>
+
+<EditForm Model="@currentEmployee" OnValidSubmit="@HandleValidSubmit">
+    <DataAnnotationsValidator />
+    <ValidationSummary />
+
+    @if (currentEmployee == null)
+    {
+        <p>Employee not found.</p>
+    }
+    else
+    {
+        <div class="form-group">
+            <label>Name:</label>
+            <InputText @bind-Value="currentEmployee.Name" class="form-control" />
+            <ValidationMessage For="@(() => currentEmployee.Name)" />
+        </div>
+
+        <div class="form-group">
+            <label>Title (Junior, Senior, CEO):</label>
+            <InputText @bind-Value="currentEmployee.Title" class="form-control" />
+            <ValidationMessage For="@(() => currentEmployee.Title)" />
+        </div>
+
+        <div class="form-group">
+            <label>Salary:</label>
+            <InputNumber @bind-Value="currentEmployee.Salary" class="form-control" />
+            <ValidationMessage For="@(() => currentEmployee.Salary)" />
+        </div>
+
+        <div class="form-group">
+            <label>Profile Image URL:</label>
+            <InputText @bind-Value="currentEmployee.ProfileImage" class="form-control" />
+        </div>
+
+        <button class="btn btn-success" type="submit">Save</button>
+        <button class="btn btn-secondary" @onclick="Cancel">Cancel</button>
+    }
+</EditForm>
+
+@code {
+    [Parameter]
+    public int Id { get; set; }
+
+    private Employee? currentEmployee;
+
+    protected override void OnInitialized()
+    {
+        // Attempt to load the employee by ID
+        currentEmployee = EmployeeService.GetEmployeeById(Id);
+    }
+
+    private void HandleValidSubmit()
+    {
+        if (currentEmployee != null)
+        {
+            EmployeeService.UpdateEmployee(currentEmployee);
+            Navigation.NavigateTo("/employees");
+        }
+    }
+
+    private void Cancel()
+    {
+        Navigation.NavigateTo("/employees");
+    }
+}
