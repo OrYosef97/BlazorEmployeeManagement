@@ -1,7 +1,15 @@
-﻿<Router AppAssembly="typeof(Program).Assembly">
+﻿@using Microsoft.AspNetCore.Components.Routing
+
+<Router AppAssembly="@typeof(Program).Assembly" PreferExactMatches="true">
     <Found Context="routeData">
-        <RouteView RouteData="routeData" DefaultLayout="typeof(Layout.MainLayout)" />
-        <FocusOnNavigate RouteData="routeData" Selector="h1" />
+        <RouteView RouteData="@routeData" DefaultLayout="@typeof(Layout.MainLayout)" />
+        <FocusOnNavigate RouteData="@routeData" Selector="h1" />
     </Found>
+    <NotFound>
+        <LayoutView Layout="@typeof(Layout.MainLayout)">
+            <h1>Page not found</h1>
+        </LayoutView>
+    </NotFound>
 </Router>
-<NavLink href="/employees">Employees</NavLink>
+
+

@@ -78,3 +78,4 @@ C:\Users\Oryos\projects\EmployeeManagement\EmployeeManagement\obj\Debug\net9.0\r
 C:\Users\Oryos\projects\EmployeeManagement\EmployeeManagement\obj\Debug\net9.0\EmployeeManagement.pdb
 C:\Users\Oryos\projects\EmployeeManagement\EmployeeManagement\obj\Debug\net9.0\EmployeeManagement.genruntimeconfig.cache
 C:\Users\Oryos\projects\EmployeeManagement\EmployeeManagement\obj\Debug\net9.0\ref\EmployeeManagement.dll
+C:\Users\Oryos\projects\EmployeeManagement\EmployeeManagement\obj\Debug\net9.0\EmployeeManagement.sourcelink.json
